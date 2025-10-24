@@ -1,37 +1,50 @@
-// ShailNeeti SW - fast updates + cache-first for chapter files
-const CACHE = 'shailneeti-v5';
+// ShailNeeti SW – stale-while-revalidate for questions
+const VERSION = 'sn-v3';
 const CORE = [
-  './','./index.html','./main.jsx',
-  './questions-index.json',
-  './ganesh.png',
-  './favicon-16.png','./favicon-32.png',
-  './icon-192.png','./icon-512.png','./apple-touch-icon.png'
+  './','./index.html','./main.jsx','./manifest.webmanifest',
+  './ganesh.png','./favicon-16.png','./favicon-32.png','./apple-touch-icon.png',
+  './questions-index.json'
 ];
 
 self.addEventListener('install', e=>{
-  e.waitUntil(
-    caches.open(CACHE).then(c=>c.addAll(CORE)).then(()=>self.skipWaiting())
-  );
+  e.waitUntil(caches.open(VERSION).then(c=>c.addAll(CORE)));
+  self.skipWaiting();
 });
 
 self.addEventListener('activate', e=>{
   e.waitUntil(
-    caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())
+    caches.keys().then(keys=>Promise.all(
+      keys.filter(k=>k!==VERSION).map(k=>caches.delete(k))
+    ))
   );
+  self.clients.claim();
 });
 
-// chapter JSON: cache-first; other requests: network-first
 self.addEventListener('fetch', e=>{
   const url = new URL(e.request.url);
-  if(url.pathname.includes('/questions/')){
-    e.respondWith(
-      caches.match(e.request).then(res => res || fetch(e.request).then(r=>{
-        const copy=r.clone(); caches.open(CACHE).then(c=>c.put(e.request,copy)); return r;
-      }))
-    );
-  } else {
-    e.respondWith(
-      fetch(e.request).catch(()=>caches.match(e.request))
-    );
+  // questions: stale-while-revalidate
+  if (url.pathname.includes('/questions/')) {
+    e.respondWith((async ()=>{
+      const cache = await caches.open(VERSION);
+      const cached = await cache.match(e.request);
+      const net = fetch(e.request).then(r=>{ cache.put(e.request, r.clone()); return r; }).catch(()=>cached);
+      return cached || net;
+    })());
+    return;
   }
+  // index list: SWR
+  if (url.pathname.endsWith('/questions-index.json')) {
+    e.respondWith((async ()=>{
+      const cache = await caches.open(VERSION);
+      const cached = await cache.match(e.request);
+      const net = fetch(e.request).then(r=>{ cache.put(e.request, r.clone()); return r; }).catch(()=>cached);
+      return cached || net;
+    })());
+    return;
+  }
+  // default: network-first
+  e.respondWith((async ()=>{
+    try { const r = await fetch(e.request); const c=await caches.open(VERSION); c.put(e.request, r.clone()); return r; }
+    catch { const cached = await caches.match(e.request); return cached || Response.error(); }
+  })());
 });
