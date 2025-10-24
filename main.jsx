@@ -1,102 +1,61 @@
-/* ================= ShailNeeti main.jsx (fast, polished) ================== */
-const {useEffect, useMemo, useRef, useState} = React;
+const {useEffect,useMemo,useRef,useState} = React;
 
-/* -------- Timer rule -------- */
-const TIME_PER_Q_MIN = 1.2;
-const timeForN = n => Math.round(n * TIME_PER_Q_MIN * 60);
-const fmt = s => {
-  const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = s%60;
-  return h>0 ? `${h}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`
-             : `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
-};
-
-/* -------- Storage -------- */
-const LS = "shailneeti_results_v1";
+/* ---------------- storage ---------------- */
+const LS_HISTORY = 'sn_history_v1';
 const store = {
-  get(){ try{return JSON.parse(localStorage.getItem(LS))||[];}catch{return[];} },
-  set(v){ try{localStorage.setItem(LS,JSON.stringify(v));}catch{} }
+  get(){ try{ return JSON.parse(localStorage.getItem(LS_HISTORY))||[] }catch{ return [] } },
+  set(v){ try{ localStorage.setItem(LS_HISTORY, JSON.stringify(v)) }catch{} }
 };
 
-/* -------- Utils -------- */
-const shuffle = a=>{const x=a.slice(); for(let i=x.length-1;i>0;i--){const j=(Math.random()*(i+1))|0; [x[i],x[j]]=[x[j],x[i]];} return x;};
-const pickN = (a,n)=>shuffle(a).slice(0,n);
-const fetchJson = async p => { const r=await fetch(`${p}?v=${Date.now()}`); if(!r.ok) throw new Error(p); return r.json(); };
+/* ---------------- time helpers ---------------- */
+const PER_Q_MIN = 1.2;
+const secsFor = n => Math.round(n * PER_Q_MIN * 60);
+const fmt = s => {
+  const h=(s/3600)|0,m=((s%3600)/60)|0,sec=(s%60)|0;
+  return h?`${h}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`
+          :`${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+};
 
-/* -------- FancySelect (auto flip + scroll, no clipping) -------- */
-function FancySelect({ value, onChange, options }) {
-  const [open, setOpen] = useState(false);
-  const [place, setPlace] = useState('bottom');
-  const btnRef = useRef(null); const listRef = useRef(null);
+/* ---------------- util ---------------- */
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;[a[i],a[j]]=[a[j],a[i]];}return a};
+const pickN=(arr,n)=>shuffle(arr).slice(0,n);
 
-  useEffect(()=>{
-    const close = e => {
-      if(!btnRef.current || !listRef.current) return;
-      if(!btnRef.current.contains(e.target) && !listRef.current.contains(e.target)) setOpen(false);
-    };
-    const esc = e=>{ if(e.key==='Escape') setOpen(false); };
-    document.addEventListener('mousedown',close);
-    document.addEventListener('keydown',esc);
-    return ()=>{document.removeEventListener('mousedown',close);document.removeEventListener('keydown',esc);};
-  },[]);
+/* ---------------- UI helpers ---------------- */
+const Btn = ({className='',children,...p}) =>
+  <button {...p} className={`glass-btn ripple px-4 py-2 rounded-md text-gray-800 ${className}`} >{children}</button>;
 
-  const toggle = ()=>{
-    const r = btnRef.current.getBoundingClientRect();
-    const below = window.innerHeight - r.bottom;
-    const needs = 240; // px
-    setPlace(below >= needs ? 'bottom':'top');
-    setOpen(o=>!o);
-  };
+const Solid = ({className='',children,...p}) =>
+  <button {...p} className={`px-5 py-2 rounded-md text-white bg-teal-600 hover:bg-teal-700 ripple`}>{children}</button>;
 
-  return (
-    <div className="relative">
-      <button ref={btnRef} onClick={toggle}
-              className="w-full text-left p-2 pr-8 rounded-lg border glass hover:shadow"
-              aria-haspopup="listbox" aria-expanded={open}>
-        {value}<span className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500">▾</span>
-      </button>
-
-      {open && (
-        <ul ref={listRef} role="listbox"
-            className={`absolute z-20 left-0 right-0 rounded-xl border bg-white/95 backdrop-blur shadow-xl max-h-60 overflow-auto ${place==='bottom'?'mt-2 top-full':'mb-2 bottom-full'}`}>
-          {options.map(opt=>(
-            <li key={opt} role="option" aria-selected={opt===value}
-                className={`px-3 py-2 cursor-pointer hover:bg-teal-50 ${opt===value?'bg-teal-100 text-teal-700 font-medium':''}`}
-                onClick={()=>{onChange(opt); setOpen(false);}}>
-              {opt}
-            </li>
-          ))}
-        </ul>
-      )}
+/* ---------------- Top bar ---------------- */
+const TopBar = ({onHome,onHistory,onAnalytics}) => (
+  <header className="sticky top-0 z-20 bg-white/80 backdrop-blur border-b">
+    <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+      <h1 className="font-semibold">
+        <span className="font-extrabold text-gray-900">ShailNeeti</span>
+        <span className="text-gray-500"> — CUET PG Economics</span>
+      </h1>
+      <div className="flex gap-2 text-sm">
+        <Btn onClick={onHistory}>Review Past Results</Btn>
+        <Btn onClick={onAnalytics}>Analytics</Btn>
+        <Btn onClick={onHome}>Home</Btn>
+      </div>
     </div>
-  );
-}
+  </header>
+);
 
-/* -------- Ripple helper for palette -------- */
-function ripple(e){
-  const host = e.currentTarget;
-  const r = document.createElement('span');
-  const rect = host.getBoundingClientRect();
-  const size = Math.max(rect.width, rect.height);
-  const x = e.clientX - rect.left - size/2;
-  const y = e.clientY - rect.top - size/2;
-  r.className='r';
-  r.style.width=r.style.height=size+'px';
-  r.style.left=x+'px'; r.style.top=y+'px';
-  r.style.animation='ripple .6s ease-out';
-  host.appendChild(r);
-  r.addEventListener('animationend',()=>r.remove(),{once:true});
-}
-
-/* ============================ APP =================================== */
-function App(){
-  const [page,setPage] = useState('home');    // home | quiz | result | history | analytics
+/* ---------------- App ---------------- */
+const App = ()=>{
+  const [page,setPage] = useState('home');   // home | quiz | result | history | analytics
+  const [chapters,setChapters] = useState([]);
+  const [chapter,setChapter] = useState('');
   const [mode,setMode] = useState('practice');
-  const [chapters,setChapters] = useState([]); // from questions-index.json
-  const [chapter,setChapter] = useState('');   // selected title
-  const [questions,setQuestions] = useState([]); // loaded (selected)
-  const [active,setActive] = useState([]);
-  const [testCount,setTestCount] = useState(10);
+  const [count,setCount] = useState(10);
 
+  const [loading,setLoading] = useState(true);
+  const [err,setErr] = useState('');
+
+  const [active,setActive] = useState([]);      // questions in current run
   const [current,setCurrent] = useState(0);
   const [answers,setAnswers] = useState({});
   const [marked,setMarked] = useState({});
@@ -105,270 +64,259 @@ function App(){
   const [remaining,setRemaining] = useState(0);
   const timer = useRef(null);
 
-  const [loading,setLoading] = useState(true);
-  const [err,setErr] = useState('');
-
-  /* ---- boot: load index, then default to first chapter (fast) ---- */
+  /* ---- load index only (fast) ---- */
   useEffect(()=>{
-    (async()=>{
-      try{
-        const idx = await fetchJson('./questions-index.json');
-        setChapters(idx);
-        const first = idx?.[0]?.title || 'All';
-        setChapter(first);
-        if(idx?.[0]) {
-          const q = await fetchJson(`./questions/${idx[0].file}`);
-          setQuestions(q);
-        } else {
-          setQuestions([]);
-        }
-      }catch(e){
-        setErr('Could not load questions-index.json');
-      }finally{
-        setLoading(false);
-      }
-    })();
+    fetch('questions-index.json?v='+Date.now())
+      .then(r=>r.json()).then(d=>{
+        setChapters(d.chapters||[]);
+        setChapter(d.chapters?.[0]?.id || '');
+      })
+      .catch(()=>setErr('Could not load questions.json'))
+      .finally(()=>setLoading(false));
   },[]);
 
-  /* ---- change chapter ---- */
-  async function handleChapterChange(newChapter){
-    setChapter(newChapter);
-    setLoading(true);
-    try{
-      if(newChapter === 'All'){
-        // Lazy-load ALL files only when requested
-        const idx = chapters || [];
-        const list = await Promise.allSettled(idx.map(c=>fetchJson(`./questions/${c.file}`)));
-        const merged = [];
-        list.forEach(p=>{ if(p.status==='fulfilled' && Array.isArray(p.value)) merged.push(...p.value); });
-        setQuestions(merged);
-      }else{
-        const found = chapters.find(c=>c.title===newChapter || c.id===newChapter);
-        if(!found) throw new Error('Chapter not found');
-        setQuestions(await fetchJson(`./questions/${found.file}`));
-      }
-      setErr('');
-    }catch(e){
-      console.error(e);
-      setErr('Could not load selected chapter file');
-    }finally{
-      setLoading(false);
-    }
-  }
-
+  /* ---- derived ---- */
   const total = active.length;
-  const attempted = useMemo(()=>Object.keys(answers).filter(k=>answers[k]!=null).length,[answers,total]);
-  const unattempted = Math.max(0, total - attempted);
+  const attempted = useMemo(()=>Object.keys(answers).filter(k=>answers[k]!=null).length,[answers]);
+  const unattempted = Math.max(0,total-attempted);
   const score = useMemo(()=>active.reduce((s,q,i)=>s+(answers[i]===q.answer?1:0),0),[answers,active]);
 
-  const stopTimer = ()=>{ if(timer.current){ clearInterval(timer.current); timer.current=null; } };
-  const startTimer = sec => {
-    stopTimer(); setRemaining(sec);
-    timer.current = setInterval(()=>{
-      setRemaining(p=>{
-        if(p<=1){ clearInterval(timer.current); setPage('result'); return 0; }
-        return p-1;
-      });
-    }, 1000);
-  };
+  const stop = ()=>{ if(timer.current){ clearInterval(timer.current); timer.current=null; } };
+  const start = sec => { stop(); setRemaining(sec); timer.current=setInterval(()=>setRemaining(p=>p<=1?(stop(),setPage('result'),0):p-1),1000) };
 
-  function resetRun(){ setCurrent(0); setAnswers({}); setMarked({}); setSkipped({}); }
-  function startPractice(){ setActive(questions); resetRun(); stopTimer(); setPage('quiz'); }
-  function startTest(){
-    const n = Math.max(1, Math.min(parseInt(testCount||1,10), questions.length));
-    setActive(pickN(questions, n));
-    resetRun(); startTimer(timeForN(n)); setPage('quiz');
+  const resetRun = ()=>{ setCurrent(0); setAnswers({}); setMarked({}); setSkipped({}); };
+
+  /* ---- chapter loader (lazy) ---- */
+  async function loadChapterItems(chId){
+    const ch = chapters.find(c=>c.id===chId);
+    if(!ch) return [];
+    const url = `questions/${ch.file}?v=${Date.now()}`;
+    const d = await fetch(url).then(r=>r.json());
+    return Array.isArray(d)?d:(d.questions||[]);
   }
 
-  /* ---- save attempt ---- */
+  async function startPractice(){
+    const items = await loadChapterItems(chapter);
+    setActive(items); resetRun(); stop(); setPage('quiz');
+  }
+  async function startTest(){
+    const items = await loadChapterItems(chapter);
+    const req = Math.max(1, parseInt(count||1,10));
+    const n = Math.max(1, Math.min(req, items.length));
+    const set = pickN(items, n);
+    setActive(set); resetRun(); start(secsFor(n)); setPage('quiz');
+  }
+
+  /* ---- persist history at result ---- */
   useEffect(()=>{
-    if(page!=='result' || !total) return;
-    const entry = {
-      id:'attempt_'+Date.now(), timestamp:new Date().toISOString(),
-      mode, chapter, total, score, percent: total?Math.round(score/total*100):0,
-      durationSec: mode==='test'? timeForN(total): null,
-      answers: Array.from({length:total},(_,i)=>answers[i]??null),
-      questions: active.map(q=>({chapter:q.chapter,question:q.question,options:q.options,answer:q.answer,source:q.source??null}))
-    };
-    const h=store.get(); h.unshift(entry); store.set(h.slice(0,50));
+    if(page!=='result'||!total) return;
+    const ch = chapters.find(c=>c.id===chapter)?.name || chapter;
+    const h = store.get();
+    h.unshift({
+      id:'attempt_'+Date.now(),
+      timestamp:new Date().toISOString(),
+      mode, chapter: ch, total, score,
+      percent: total?Math.round(score/total*100):0,
+      durationSec: mode==='test'?secsFor(total):null,
+      answers: Array.from({length: total},(_,i)=>answers[i]??null),
+      questions: active.map(q=>({chapter:q.chapter,question:q.question,options:q.options,answer:q.answer,source:q.source||null}))
+    });
+    store.set(h.slice(0,60));
   },[page]);
 
-  /* ---------------- RENDER ---------------- */
-  const TopBarBtns = () => (
-    <div className="flex sm:hidden gap-2 px-4 py-2 sticky top-[52px] bg-white/80 backdrop-blur z-10 border-b">
-      <button className="glassBtn px-3 py-2 rounded-lg" onClick={()=>setPage('history')}>Review Past Results</button>
-      <button className="glassBtn px-3 py-2 rounded-lg" onClick={()=>setPage('analytics')}>Analytics</button>
-      <button className="glassBtn px-3 py-2 rounded-lg" onClick={()=>setPage('home')}>Home</button>
-    </div>
+  /* ---------------- Renders ---------------- */
+  if (loading) return (
+    <>
+      <TopBar onHome={()=>setPage('home')} onHistory={()=>setPage('history')} onAnalytics={()=>setPage('analytics')} />
+      <div className="max-w-6xl mx-auto px-4 py-10 text-gray-500">Loading…</div>
+    </>
   );
-
-  if(loading) return <main className="text-center text-gray-600 py-10">Loading…</main>;
-  if(err) return <main className="text-center text-red-600 py-10">{err}</main>;
+  if (err) return (
+    <>
+      <TopBar onHome={()=>setPage('home')} onHistory={()=>setPage('history')} onAnalytics={()=>setPage('analytics')} />
+      <div className="max-w-6xl mx-auto px-4 py-10 text-red-600">{err}</div>
+    </>
+  );
 
   /* ---- HOME ---- */
   if(page==='home'){
-    const titles = ['All', ...chapters.map(c=>c.title)];
-    const filteredCount = questions.length;
-    const req = Math.max(1, parseInt(testCount || 1, 10));
-    const eff = Math.min(req, filteredCount || 1);
-    const est = timeForN(eff);
+    const currentChapterName = chapters.find(c=>c.id===chapter)?.name || '—';
+    const est = fmt(secsFor(Math.max(1, parseInt(count||1,10))));
 
     return (
       <>
-        <TopBarBtns/>
-        <section className="liquid rounded-3xl p-5 md:p-6 shadow-glass border animate-slideIn glassCard">
-          <h2 className="text-xl md:text-2xl font-extrabold">MCQ Practice for CUET PG Economics</h2>
-          <p className="text-gray-600 mt-1">Practice chapter-wise Economics PYQs with instant feedback.</p>
-
-          <div className="grid md:grid-cols-2 gap-4 mt-4">
-            <div>
-              <label className="text-sm">Chapter Filter</label>
-              <FancySelect value={chapter||titles[0]} onChange={handleChapterChange} options={titles}/>
-            </div>
-            <div>
-              <label className="text-sm">Mode</label>
-              <div className="flex gap-5 mt-2">
-                <label className="flex items-center gap-2"><input type="radio" checked={mode==='practice'} onChange={()=>setMode('practice')}/> Practice</label>
-                <label className="flex items-center gap-2"><input type="radio" checked={mode==='test'} onChange={()=>setMode('test')}/> Test</label>
-              </div>
-            </div>
+        <TopBar
+          onHome={()=>setPage('home')}
+          onHistory={()=>setPage('history')}
+          onAnalytics={()=>setPage('analytics')}
+        />
+        <main className="max-w-6xl mx-auto px-4 py-8">
+          <div className="text-center mb-4">
+            <div className="text-3xl font-extrabold text-rose-400">ShailNeeti</div>
+            <img src="ganesh.png" alt="Ganesh" className="mx-auto mt-2 h-24 opacity-60" />
           </div>
 
-          {mode==='test' && (
-            <div className="grid sm:grid-cols-2 gap-4 mt-4 items-end">
+          <section className="glass-card p-6">
+            <h2 className="text-xl md:text-2xl font-bold">MCQ Practice for CUET PG Economics</h2>
+            <p className="text-gray-600">Practice chapter-wise Economics PYQs with instant feedback.</p>
+
+            <div className="grid md:grid-cols-2 gap-4 mt-4">
               <div>
-                <label className="text-sm">No. of Questions</label>
-                <input type="number" min="1" max={filteredCount} value={testCount}
-                       onChange={e=>setTestCount(e.target.value)}
-                       className="w-40 p-2 rounded-lg border glass hover:shadow"/>
-                <div className="text-xs text-gray-600 mt-1">Available: {filteredCount}</div>
+                <label className="text-sm">Chapter Filter</label>
+                <select value={chapter} onChange={e=>setChapter(e.target.value)}
+                        className="w-full mt-1 p-2 rounded-md border bg-white">
+                  {chapters.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
               </div>
-              <div className="sm:justify-self-end">
-                <label className="text-sm block">Time limit</label>
-                <div className="glass inline-block px-3 py-2 rounded-lg border text-sm">{fmt(est)}</div>
+              <div>
+                <label className="text-sm">Mode</label>
+                <div className="flex items-center gap-6 mt-1">
+                  <label className="flex items-center gap-2">
+                    <input type="radio" checked={mode==='practice'} onChange={()=>setMode('practice')} /> Practice
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input type="radio" checked={mode==='test'} onChange={()=>setMode('test')} /> Test
+                  </label>
+                </div>
               </div>
             </div>
-          )}
 
-          <div className="mt-6 flex flex-wrap gap-3">
-            {mode==='practice'
-              ? <button className="px-4 py-2 rounded-lg text-white bg-teal-600 hover:brightness-95 transition" onClick={startPractice}>Start Practice</button>
-              : <button className="px-4 py-2 rounded-lg text-white bg-teal-600 hover:brightness-95 transition" onClick={startTest}>Start Test</button>}
-            <button className="glassBtn px-4 py-2 rounded-lg hover:shadow" onClick={()=>setPage('history')}>Review Past Results</button>
-            <button className="glassBtn px-4 py-2 rounded-lg hover:shadow" onClick={()=>setPage('analytics')}>Analytics</button>
-          </div>
-        </section>
+            {/* Number ↔ Time limit */}
+            {mode==='test' && (
+              <div className="grid md:grid-cols-2 gap-4 mt-3">
+                <div>
+                  <label className="text-sm">No. of Questions</label>
+                  <input type="number" min="1" value={count}
+                         onChange={e=>setCount(e.target.value)}
+                         className="w-40 p-2 rounded-md border bg-white"/>
+                </div>
+                <div className="md:ml-auto">
+                  <label className="text-sm block">Time limit</label>
+                  <div className="w-40 p-2 rounded-md border bg-white text-center">{est}</div>
+                </div>
+              </div>
+            )}
+
+            <div className="mt-5 flex flex-wrap gap-2">
+              {mode==='practice'
+                ? <Solid onClick={startPractice}>Start Practice</Solid>
+                : <Solid onClick={startTest}>Start Test</Solid>
+              }
+              <Btn onClick={()=>setPage('history')}>Review Past Results</Btn>
+              <Btn onClick={()=>setPage('analytics')}>Analytics</Btn>
+            </div>
+          </section>
+        </main>
       </>
     );
   }
 
   /* ---- QUIZ ---- */
   if(page==='quiz'){
-    const q = active[current]; if(!q) return null;
+    const q = active[current];
 
-    const status = (i) => {
-      const an = answers[i]!=null, mk = !!marked[i], sk=!!skipped[i];
-      if(an && mk) return 'attempted_marked';
-      if(!an && mk) return 'marked_only';
-      if(!an && sk) return 'skipped';
-      if(an) return 'attempted';
-      return 'unattempted';
+    const setAns = opt => {
+      setAnswers(p=>({...p,[current]:opt}));
+      setSkipped(p=>{ const m={...p}; delete m[current]; return m;});
+    };
+    const toggleMark = () => setMarked(p=>({...p,[current]:!p[current]}));
+
+    const statusClass = (i)=>{
+      const answered = answers[i]!=null; const m = !!marked[i]; const s = !!skipped[i];
+      if(answered && m) return 'bg-blue-500 text-white';
+      if(!answered && m) return 'bg-violet-500 text-white';
+      if(!answered && s) return 'bg-red-500 text-white';
+      if(answered) return 'bg-emerald-500 text-white';
+      return 'bg-white text-gray-800 border';
     };
 
     return (
       <>
-        <TopBarBtns/>
-        <div className="grid lg:grid-cols-[1fr,280px] gap-6 animate-slideIn">
-          <section className="glassCard rounded-2xl p-4 border relative">
-            <div className="absolute right-4 top-3 text-xs glass px-2 py-1 rounded border">
-              Attempted: <b>{attempted}</b> • Unattempted: <b>{unattempted}</b>
-            </div>
+        <TopBar
+          onHome={()=>{stop();setPage('home')}}
+          onHistory={()=>setPage('history')}
+          onAnalytics={()=>setPage('analytics')}
+        />
+        <main className="max-w-6xl mx-auto px-4 py-6">
+          <div className="grid lg:grid-cols-[1fr,280px] gap-6">
 
-            <div className="text-sm text-gray-500 mb-1">CHAPTER</div>
-            <div className="mb-2 font-medium">{q.chapter || '—'}</div>
+            {/* left: question */}
+            <section className="glass-card p-5 relative overflow-hidden">
+              <img src="ganesh.png" className="absolute -top-10 left-1/2 -translate-x-1/2 h-14 opacity-40" />
+              <div className="absolute right-3 top-3 text-xs bg-white/70 backdrop-blur px-2 py-1 rounded border">
+                Attempted: <b>{attempted}</b> • Unattempted: <b>{unattempted}</b>
+              </div>
 
-            <h3 className="text-lg font-semibold leading-relaxed">{q.question}</h3>
-            {q.source && <div className="mt-1 text-xs text-gray-500">Source: {q.source}</div>}
+              <div className="mb-2 text-xs text-gray-600 uppercase">Chapter</div>
+              <div className="font-medium mb-2">{q?.chapter||'—'}</div>
 
-            <div className="mt-4 grid gap-3">
-              {q.options.map((opt, idx)=>(
-                <label key={idx}
-                       className={`flex items-center gap-3 p-3 rounded-lg border glass cursor-pointer hover:shadow transition
-                                  ${answers[current]===opt?'border-teal-500 ring-1 ring-teal-200':''}`}>
-                  <input type="radio" name={`q-${current}`} className="accent-teal-600"
-                         checked={answers[current]===opt}
-                         onChange={()=>{ setAnswers(p=>({...p,[current]:opt})); setSkipped(p=>{const c={...p}; delete c[current]; return c;}); }}/>
-                  <span className="font-medium">{String.fromCharCode(65+idx)}.</span>
-                  <span>{opt}</span>
-                </label>
-              ))}
-            </div>
+              <h3 className="text-lg font-semibold leading-relaxed">{q?.question}</h3>
+              {q?.source && <div className="text-xs text-gray-600">Source: {q.source}</div>}
 
-            <div className="mt-5 flex items-center gap-2">
-              <button className="glassBtn px-3 py-2 rounded-lg"
-                      onClick={()=>setCurrent(c=>Math.max(0,c-1))} disabled={current===0}>Previous</button>
-              <button className="glassBtn px-3 py-2 rounded-lg"
-                      onClick={()=>setAnswers(p=>{const c={...p}; delete c[current]; return c;})}>Clear Response</button>
-              <button className={`px-3 py-2 rounded-lg border transition ${answers[current]? (marked[current]?'bg-blue-500 text-white border-blue-600':'glassBtn') : (marked[current]?'bg-violet-500 text-white border-violet-600':'glassBtn')}`}
-                      onClick={()=>setMarked(p=>({...p,[current]:!p[current]}))}>
-                {marked[current]?'Unmark Review':'Mark for Review'}
-              </button>
+              <div className="mt-4 space-y-3 animate-[slide_.25s_ease]">
+                {q?.options?.map((opt,idx)=>{
+                  const active = answers[current]===opt;
+                  return (
+                    <label key={idx}
+                           className={`flex items-center gap-3 p-3 rounded-md border cursor-pointer bg-white hover:bg-slate-50 ${active?'ring-1 ring-teal-300 border-teal-400':''}`}>
+                      <input type="radio" name={`q-${current}`} className="accent-teal-600"
+                             checked={active} onChange={()=>setAns(opt)} />
+                      <span className="font-medium">{String.fromCharCode(65+idx)}.</span>
+                      <span>{opt}</span>
+                    </label>
+                  );
+                })}
+              </div>
 
-              <div className="ml-auto" />
-              {current < active.length-1 ? (
-                <button className="px-4 py-2 rounded-lg text-white bg-teal-600 hover:brightness-95"
-                        onClick={()=>{ if(!answers[current] && !marked[current]) setSkipped(p=>({...p,[current]:true})); setCurrent(c=>c+1); }}>
-                  Next
-                </button>
-              ) : (
-                <button className="px-4 py-2 rounded-lg text-white bg-green-600 hover:brightness-95"
-                        onClick={()=>{ if(!answers[current] && !marked[current]) setSkipped(p=>({...p,[current]:true})); stopTimer(); setPage('result'); }}>
-                  Submit
-                </button>
-              )}
-            </div>
-          </section>
+              <div className="mt-5 flex flex-wrap gap-2">
+                <Btn onClick={()=>{ if(!answers[current] && !marked[current]) setSkipped(p=>({...p,[current]:true})); setCurrent(c=>Math.max(0,c-1));}}>Previous</Btn>
+                <Btn onClick={()=>setAnswers(p=>{const m={...p}; delete m[current]; return m;})}>Clear Response</Btn>
+                <Btn
+                  onClick={toggleMark}
+                  className={`${answers[current] ? (marked[current]?'text-white bg-blue-500 border-blue-500':'') : (marked[current]?'text-white bg-violet-500 border-violet-500':'')}`}
+                >
+                  {marked[current]?'Unmark Review':'Mark for Review'}
+                </Btn>
 
-          {/* Palette */}
-          <aside className="glassCard rounded-2xl p-4 border">
-            <div className="flex items-center justify-between mb-2">
-              <div className="font-semibold">Question Palette</div>
-              {mode==='test' && <div className="glass px-2 py-1 rounded border text-xs">⏱ {fmt(remaining)}</div>}
-            </div>
+                <div className="flex-1"></div>
+                {current<active.length-1
+                  ? <Solid onClick={()=>{ if(!answers[current] && !marked[current]) setSkipped(p=>({...p,[current]:true})); setCurrent(c=>c+1);}}>Next</Solid>
+                  : <Solid className="bg-emerald-600 hover:bg-emerald-700" onClick={()=>{ if(!answers[current] && !marked[current]) setSkipped(p=>({...p,[current]:true})); stop(); setPage('result');}}>Submit</Solid>
+                }
+              </div>
+            </section>
 
-            <div className="grid grid-cols-5 gap-2">
-              {active.map((_,i)=>{
-                const s = status(i);
-                const cls = s==='attempted_marked' ? "bg-blue-500 text-white border-blue-600"
-                          : s==='marked_only'     ? "bg-violet-500 text-white border-violet-600"
-                          : s==='skipped'         ? "bg-red-500 text-white border-red-600"
-                          : s==='attempted'       ? "bg-emerald-500 text-white border-emerald-600"
-                                                  : "bg-white text-gray-800 border-gray-300";
-                return (
-                  <button key={i} onClick={(e)=>{ ripple(e); if(!answers[current] && !marked[current]) setSkipped(p=>({...p,[current]:true})); setCurrent(i); }}
-                          className={`rippleContainer w-8 h-8 rounded-md border text-sm transition transform hover:scale-105 hover:shadow ${cls}`}>
-                    {i+1}
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="grid grid-cols-2 gap-2 text-xs mt-4">
-              <div className="flex items-center gap-2"><span className="w-3 h-3 rounded bg-white border"></span> Unattempted</div>
-              <div className="flex items-center gap-2"><span className="w-3 h-3 rounded bg-emerald-500"></span> Attempted</div>
-              <div className="flex items-center gap-2"><span className="w-3 h-3 rounded bg-violet-500"></span> Marked (no answer)</div>
-              <div className="flex items-center gap-2"><span className="w-3 h-3 rounded bg-blue-500"></span> Attempted + Marked</div>
-              <div className="flex items-center gap-2"><span className="w-3 h-3 rounded bg-red-500"></span> Skipped</div>
-            </div>
-
-            <div className="mt-4">
-              <button className="w-full px-4 py-2 rounded-lg text-white bg-green-600 hover:brightness-95"
-                      onClick={()=>{ stopTimer(); setPage('result'); }}>
-                Submit Test
-              </button>
-            </div>
-          </aside>
-        </div>
+            {/* right: palette */}
+            <aside className="glass-card p-4">
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="font-semibold">Question Palette</h4>
+                {mode==='test' && <span className={`text-xs px-2 py-1 rounded border ${remaining<=30?'border-red-500 text-red-600':'border-gray-300 text-gray-700'}`}>⏱ {fmt(remaining)}</span>}
+              </div>
+              <div className="grid grid-cols-5 gap-2">
+                {active.map((_,i)=>{
+                  const cls = statusClass(i);
+                  const ring = i===current?' ring-2 ring-teal-500':'';
+                  return (
+                    <button key={i} onClick={()=>setCurrent(i)}
+                      className={`ripple w-8 h-8 rounded-md text-sm flex items-center justify-center ${cls} ${ring}`}>
+                      {i+1}
+                    </button>
+                  )
+                })}
+              </div>
+              <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
+                <div className="flex items-center gap-2"><span className="w-3 h-3 rounded bg-white border"></span> Unattempted</div>
+                <div className="flex items-center gap-2"><span className="w-3 h-3 rounded bg-emerald-500"></span> Attempted</div>
+                <div className="flex items-center gap-2"><span className="w-3 h-3 rounded bg-violet-500"></span> Marked (no answer)</div>
+                <div className="flex items-center gap-2"><span className="w-3 h-3 rounded bg-blue-500"></span> Attempted + Marked</div>
+                <div className="flex items-center gap-2"><span className="w-3 h-3 rounded bg-red-500"></span> Skipped</div>
+              </div>
+              <div className="mt-4">
+                <Solid className="w-full bg-emerald-600 hover:bg-emerald-700" onClick={()=>{stop();setPage('result')}}>Submit Test</Solid>
+              </div>
+            </aside>
+          </div>
+        </main>
       </>
     );
   }
@@ -378,54 +326,88 @@ function App(){
     const percent = total?Math.round(score/total*100):0;
     return (
       <>
-        <TopBarBtns/>
-        <section className="glassCard rounded-2xl p-4 border animate-slideIn">
-          <h2 className="text-xl font-bold">Result</h2>
-          <p className="mt-1">Score: {score}/{total} ({percent}%)</p>
-          <div className="space-y-3 mt-3">
-            {active.map((qq,i)=>{
-              const ok = (answers[i]===qq.answer);
-              return (
-                <div key={i} className="p-3 glass rounded-lg border">
-                  <div className="flex justify-between">
-                    <b>Q{i+1}. {qq.question}</b>
-                    <span className={`px-2 py-1 text-xs rounded ${ok?'bg-green-100 text-green-700':'bg-red-100 text-red-700'}`}>{ok?'Correct':'Incorrect'}</span>
+        <TopBar onHome={()=>setPage('home')} onHistory={()=>setPage('history')} onAnalytics={()=>setPage('analytics')} />
+        <main className="max-w-6xl mx-auto px-4 py-8">
+          <section className="glass-card p-6">
+            <h2 className="text-xl font-semibold">Result</h2>
+            <p>Score: {score}/{total} ({percent}%)</p>
+            <div className="mt-3 space-y-2">
+              {active.map((qq,i)=>{
+                const ok = answers[i]===qq.answer;
+                return (
+                  <div key={i} className="p-3 rounded-md border bg-white">
+                    <div className="flex justify-between">
+                      <b>Q{i+1}. {qq.question}</b>
+                      <span className={`text-xs px-2 py-1 rounded ${ok?'bg-green-100 text-green-700':'bg-red-100 text-red-700'}`}>{ok?'Correct':'Incorrect'}</span>
+                    </div>
+                    <div className="text-sm">Your: {answers[i]||'Not answered'} • Correct: <b>{qq.answer}</b></div>
                   </div>
-                  <div className="text-sm mt-1">Your: {answers[i]||'Not answered'} • Correct: <b className="text-green-700">{qq.answer}</b></div>
-                  {qq.explanation && <div className="text-sm text-gray-600">{qq.explanation}</div>}
-                </div>
-              );
-            })}
-          </div>
-          <div className="mt-3">
-            <button className="glassBtn px-4 py-2 rounded-lg" onClick={()=>setPage('home')}>Home</button>
-          </div>
-        </section>
+                )
+              })}
+            </div>
+            <div className="mt-3"><Btn onClick={()=>setPage('home')}>Home</Btn></div>
+          </section>
+        </main>
       </>
-    );
+    )
   }
 
   /* ---- HISTORY ---- */
   if(page==='history'){
+    const [sortBy,setSortBy] = useState('date_desc');
     const h = store.get();
+    const sorted = [...h].sort((a,b)=>{
+      if (sortBy==='date_desc') return new Date(b.timestamp)-new Date(a.timestamp);
+      if (sortBy==='date_asc') return new Date(a.timestamp)-new Date(b.timestamp);
+      if (sortBy==='score_desc') return (b.percent||0)-(a.percent||0);
+      if (sortBy==='score_asc') return (a.percent||0)-(b.percent||0);
+      return 0;
+    });
     return (
       <>
-        <TopBarBtns/>
-        <section className="glassCard rounded-2xl p-4 border animate-slideIn">
-          <h2 className="text-xl font-bold">Past Results</h2>
-          {h.length===0 ? <div className="text-gray-500">No attempts yet.</div> : (
-            <div className="space-y-3 mt-3">
-              {h.map(a=>(
-                <details key={a.id} className="glass rounded-lg border p-3">
-                  <summary className="cursor-pointer font-medium">{new Date(a.timestamp).toLocaleString()} • {a.mode} • {a.chapter}</summary>
-                  <div className="text-sm text-gray-600 mt-2">Score: {a.score}/{a.total} ({a.percent}%) {a.durationSec?`• Time: ${fmt(a.durationSec)}`:''}</div>
+        <TopBar onHome={()=>setPage('home')} onHistory={()=>setPage('history')} onAnalytics={()=>setPage('analytics')} />
+        <main className="max-w-6xl mx-auto px-4 py-8">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-xl font-semibold">Past Results</h2>
+            <select className="border rounded px-2 py-1" value={sortBy} onChange={e=>setSortBy(e.target.value)}>
+              <option value="date_desc">Newest first</option>
+              <option value="date_asc">Oldest first</option>
+              <option value="score_desc">Score high → low</option>
+              <option value="score_asc">Score low → high</option>
+            </select>
+          </div>
+          {sorted.length===0 ? <div className="text-gray-500">No attempts yet.</div> : (
+            <div className="space-y-3">
+              {sorted.map(a=>(
+                <details key={a.id} className="glass-card p-4">
+                  <summary className="cursor-pointer flex items-center justify-between">
+                    <div>
+                      <div className="font-semibold">{new Date(a.timestamp).toLocaleString()} • {a.mode} • {a.chapter}</div>
+                      <div className="text-sm text-gray-600">Score {a.score}/{a.total} ({a.percent}%) {a.durationSec?`• Time: ${fmt(a.durationSec)}`:''}</div>
+                    </div>
+                  </summary>
+                  <div className="mt-2 space-y-1">
+                    {a.questions.map((q,i)=>{
+                      const your = a.answers[i]; const ok = your===q.answer;
+                      return (
+                        <div key={i} className="p-2 border rounded bg-white">
+                          <div className="flex justify-between">
+                            <b>Q{i+1}. {q.question}</b>
+                            <span className={`text-xs px-2 py-1 rounded ${ok?'bg-green-100 text-green-700':'bg-red-100 text-red-700'}`}>{ok?'Correct':'Incorrect'}</span>
+                          </div>
+                          <div className="text-sm text-gray-600">Chapter: {q.chapter||'—'} • Source: {q.source||'—'}</div>
+                          <div className="text-sm">Your: {your||'Not answered'} • Correct: <b>{q.answer}</b></div>
+                        </div>
+                      )
+                    })}
+                  </div>
                 </details>
               ))}
             </div>
           )}
-        </section>
+        </main>
       </>
-    );
+    )
   }
 
   /* ---- ANALYTICS ---- */
@@ -433,37 +415,39 @@ function App(){
     const hist = store.get();
     const agg = {};
     hist.forEach(at => at.questions.forEach((q,i)=>{
-      const ch=q.chapter||'Unknown'; if(!agg[ch]) agg[ch]={correct:0,total:0};
+      const ch = q.chapter||'Unknown'; if(!agg[ch]) agg[ch]={correct:0,total:0};
       agg[ch].total++; if(at.answers[i]===q.answer) agg[ch].correct++;
     }));
-    const rows = Object.entries(agg).map(([ch,{correct,total}])=>({ch,correct,total,pct: total?Math.round(correct/total*100):0}))
-                                   .sort((a,b)=>a.ch.localeCompare(b.ch));
+    const rows = Object.entries(agg)
+      .map(([ch,{correct,total}])=>({ch,correct,total,pct: total?Math.round(correct/total*100):0}))
+      .sort((a,b)=>a.ch.localeCompare(b.ch));
+
     return (
       <>
-        <TopBarBtns/>
-        <section className="glassCard rounded-2xl p-4 border animate-slideIn">
-          <h2 className="text-xl font-bold">Chapter-wise Analytics</h2>
+        <TopBar onHome={()=>setPage('home')} onHistory={()=>setPage('history')} onAnalytics={()=>setPage('analytics')} />
+        <main className="max-w-6xl mx-auto px-4 py-8">
+          <h2 className="text-xl font-semibold mb-3">Chapter-wise Analytics</h2>
           {rows.length===0 ? <div className="text-gray-500">No data yet.</div> : (
-            <div className="space-y-3 mt-3">
+            <div className="space-y-3">
               {rows.map(r=>(
-                <div key={r.ch} className="glass rounded-lg border p-3">
-                  <div className="flex items-center justify-between">
+                <div key={r.ch} className="glass-card p-3">
+                  <div className="flex justify-between">
                     <div className="font-semibold">{r.ch}</div>
-                    <div className="text-sm text-gray-600">{r.correct}/{r.total} • {r.pct}%</div>
+                    <div className="text-sm text-gray-700">{r.correct}/{r.total} • {r.pct}%</div>
                   </div>
-                  <div className="mt-2 h-3 w-full bg-gray-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-teal-500" style={{width:`${r.pct}%`}}/>
+                  <div className="mt-2 h-3 rounded-full bg-gray-100 overflow-hidden">
+                    <div className="h-full bg-teal-500" style={{width:`${r.pct}%`}} />
                   </div>
                 </div>
               ))}
             </div>
           )}
-        </section>
+        </main>
       </>
     );
   }
 
   return null;
-}
+};
 
-ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
