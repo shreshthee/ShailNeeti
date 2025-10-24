@@ -1,0 +1,234 @@
+[
+  {
+    "chapter": "Theory of Consumer Behaviour",
+    "question": "If a consumer’s preferences are lexicographic between two goods X and Y, what will her indifference curves look like?",
+    "options": [
+      "Parallel straight lines",
+      "Right-angled (L-shaped)",
+      "Smooth convex curves",
+      "Discontinuous and vertical/horizontal segments"
+    ],
+    "answer": "Discontinuous and vertical/horizontal segments",
+    "explanation": "Lexicographic preferences violate continuity; no well-defined indifference curves.",
+    "diagram_hint": "Step-like pattern—vertical priority for good X first, then Y.",
+    "source": "DSE 2017 Q1"
+  },
+  {
+    "chapter": "Theory of Consumer Behaviour",
+    "question": "The difference between what a consumer is willing to pay and what they actually pay is called",
+    "options": [
+      "Producer surplus",
+      "Marginal utility",
+      "Consumer surplus",
+      "Price effect"
+    ],
+    "answer": "Consumer surplus",
+    "explanation": "Area under demand curve above market price line measures consumer gain.",
+    "diagram_hint": "Triangle between demand curve and price line.",
+    "source": "CUET 2023 Q100"
+  },
+  {
+    "chapter": "Theory of Consumer Behaviour",
+    "question": "When price of a good rises and the consumer’s real income is held constant by reducing money income, which effect is isolated?",
+    "options": [
+      "Substitution effect",
+      "Income effect",
+      "Price effect",
+      "Giffen effect"
+    ],
+    "answer": "Substitution effect",
+    "explanation": "Substitution effect isolates relative price change at constant utility (Hicksian).",
+    "diagram_hint": "Movement along same indifference curve after price pivot of budget line.",
+    "source": "UOH 2016 Q20"
+  },
+  {
+    "chapter": "Theory of Consumer Behaviour",
+    "question": "According to Hicks, the substitution effect keeps",
+    "options": [
+      "Real income constant",
+      "Utility constant",
+      "Money income constant",
+      "Marginal rate of substitution constant"
+    ],
+    "answer": "Utility constant",
+    "explanation": "Hicksian substitution isolates pure price effect by keeping same utility level.",
+    "diagram_hint": "Move along same IC tangent to compensated budget line.",
+    "source": "DSE 2015 Q4"
+  },
+  {
+    "chapter": "Theory of Consumer Behaviour",
+    "question": "Slutsky decomposition keeps constant",
+    "options": [
+      "Utility",
+      "Real income (purchasing power)",
+      "Nominal income",
+      "Total expenditure"
+    ],
+    "answer": "Real income (purchasing power)",
+    "explanation": "Slutsky isolates substitution effect at constant purchasing power.",
+    "diagram_hint": "Budget line tangent shift to same affordable bundle as before.",
+    "source": "UOH 2016 Q20"
+  },
+  {
+    "chapter": "Theory of Consumer Behaviour",
+    "question": "The price consumption curve of a Giffen good slopes",
+    "options": ["Upward", "Downward", "Vertical", "Backward bending"],
+    "answer": "Upward",
+    "explanation": "As price falls, less is purchased because negative income effect outweighs substitution effect.",
+    "diagram_hint": "PCC rises from left to right — typical Giffen pattern.",
+    "source": "JNU 2014 Q21"
+  },
+  {
+    "chapter": "Theory of Consumer Behaviour",
+    "question": "When indifference curves are concave to the origin, the marginal rate of substitution (MRS) is",
+    "options": ["Increasing", "Constant", "Decreasing", "Negative"],
+    "answer": "Increasing",
+    "explanation": "Concave IC means MRS rises—violates standard convexity assumption.",
+    "diagram_hint": "Concave IC curving toward axes instead of origin.",
+    "source": "CUET 2021 Q58"
+  },
+  {
+    "chapter": "Theory of Consumer Behaviour",
+    "question": "Which assumption of cardinal utility is relaxed in indifference curve analysis?",
+    "options": ["Measurability", "Rationality", "Transitivity", "Completeness"],
+    "answer": "Measurability",
+    "explanation": "Indifference curves assume ordinal utility, not measurable utility.",
+    "source": "JNU 2015 Q17"
+  },
+  {
+    "chapter": "Theory of Consumer Behaviour",
+    "question": "If MRS between X and Y equals the ratio of prices (Px/Py), the consumer is in",
+    "options": ["Disequilibrium", "Equilibrium", "Overspending", "Underspending"],
+    "answer": "Equilibrium",
+    "explanation": "Tangency condition gives optimal bundle where MRS = Px/Py.",
+    "diagram_hint": "Budget line tangent to highest attainable IC.",
+    "source": "CUET 2023 Q45"
+  },
+  {
+    "chapter": "Theory of Consumer Behaviour",
+    "question": "When income rises and demand for good X falls, X is a",
+    "options": ["Normal good", "Inferior good", "Giffen good", "Complementary good"],
+    "answer": "Inferior good",
+    "explanation": "Negative income effect implies inferior good.",
+    "source": "UOH 2014 Q11"
+  },
+  {
+    "chapter": "Theory of Consumer Behaviour",
+    "question": "A good whose demand increases with rise in income but less than proportionately is",
+    "options": ["Normal", "Luxury", "Necessity", "Inferior"],
+    "answer": "Necessity",
+    "explanation": "0 < income elasticity < 1 indicates necessity.",
+    "source": "CUET 2021 Q46"
+  },
+  {
+    "chapter": "Theory of Consumer Behaviour",
+    "question": "Indifference curve analysis assumes",
+    "options": [
+      "Cardinal utility",
+      "Ordinal utility",
+      "Interpersonal comparison of utility",
+      "Constant marginal utility of money"
+    ],
+    "answer": "Ordinal utility",
+    "explanation": "It requires only ranking of preferences, not measurement.",
+    "source": "DSE 2014 Q5"
+  },
+  {
+    "chapter": "Theory of Consumer Behaviour",
+    "question": "When MRS is diminishing, indifference curves are",
+    "options": ["Straight lines", "Convex to origin", "Concave", "Parallel"],
+    "answer": "Convex to origin",
+    "explanation": "Diminishing MRS implies convexity.",
+    "diagram_hint": "IC bows toward origin, flatter along X-axis.",
+    "source": "UOH 2013 Q7"
+  },
+  {
+    "chapter": "Theory of Consumer Behaviour",
+    "question": "Consumer equilibrium condition using utility approach is",
+    "options": [
+      "MUx/MUy = Px/Py",
+      "MUx/Px = MUy/Py",
+      "MUx = Px",
+      "MUy = Py"
+    ],
+    "answer": "MUx/Px = MUy/Py",
+    "explanation": "Equilibrium when marginal utility per rupee equal across goods.",
+    "source": "CUET 2020 Q28"
+  },
+  {
+    "chapter": "Theory of Consumer Behaviour",
+    "question": "If MRS > Px/Py, the consumer should",
+    "options": ["Buy more X", "Buy less X", "Reduce expenditure on X", "Buy none"],
+    "answer": "Buy more X",
+    "explanation": "MRS > price ratio means utility gained per rupee of X exceeds Y.",
+    "diagram_hint": "Move downward along IC to tangent point.",
+    "source": "DSE 2018 Q9"
+  },
+  {
+    "chapter": "Theory of Consumer Behaviour",
+    "question": "The point of tangency between budget line and indifference curve represents",
+    "options": [
+      "Consumer equilibrium",
+      "Inferior good consumption",
+      "Maximum income",
+      "Substitution point"
+    ],
+    "answer": "Consumer equilibrium",
+    "explanation": "Optimal choice satisfying budget constraint and maximum utility.",
+    "source": "JNU 2012 Q11"
+  },
+  {
+    "chapter": "Theory of Consumer Behaviour",
+    "question": "In revealed preference theory, the consumer’s preferences are inferred from",
+    "options": [
+      "Questionnaire responses",
+      "Experimental tests",
+      "Actual choices made",
+      "Market predictions"
+    ],
+    "answer": "Actual choices made",
+    "explanation": "Revealed preference uses observed behavior to infer preference orderings.",
+    "source": "JNU 2016 Q8"
+  },
+  {
+    "chapter": "Theory of Consumer Behaviour",
+    "question": "The budget line shifts parallelly when",
+    "options": [
+      "Income changes",
+      "Prices of both goods change proportionately",
+      "One price changes",
+      "None of the above"
+    ],
+    "answer": "Income changes",
+    "explanation": "A rise in income with constant prices shifts budget line outward.",
+    "diagram_hint": "Parallel shift outward or inward of budget line.",
+    "source": "CUET 2022 Q55"
+  },
+  {
+    "chapter": "Theory of Consumer Behaviour",
+    "question": "The slope of indifference curve measures",
+    "options": [
+      "Marginal utility ratio",
+      "Marginal rate of substitution",
+      "Price ratio",
+      "Income ratio"
+    ],
+    "answer": "Marginal rate of substitution",
+    "explanation": "MRS = rate at which consumer substitutes one good for another.",
+    "source": "UOH 2015 Q18"
+  },
+  {
+    "chapter": "Theory of Consumer Behaviour",
+    "question": "The law of diminishing marginal utility implies that as consumption of a good increases,",
+    "options": [
+      "Total utility decreases",
+      "Marginal utility decreases",
+      "Average utility increases",
+      "Marginal utility increases"
+    ],
+    "answer": "Marginal utility decreases",
+    "explanation": "Each additional unit yields less satisfaction beyond a point.",
+    "diagram_hint": "MU curve slopes downward; TU curve rises at diminishing rate.",
+    "source": "CUET 2019 Q31"
+  }
+]
