@@ -1,0 +1,15 @@
+[
+  {
+    "chapter": "Theory of Demand & Elasticity",
+    "question": "If price elasticity of demand is −1, a 10% fall in price will:",
+    "options": [
+      "Increase total revenue",
+      "Decrease total revenue",
+      "Leave total revenue unchanged",
+      "Make total revenue zero"
+    ],
+    "answer": "Leave total revenue unchanged",
+    "explanation": "At unitary elasticity, %ΔQ = −%ΔP so P×Q remains constant.",
+    "source": "CUET PYQ"
+  }
+]
